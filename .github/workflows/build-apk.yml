@@ -29,7 +29,7 @@ jobs:
         run: npm install -g @bubblewrap/cli
 
       - name: Initialize Bubblewrap project
-        run: echo "n" | bubblewrap init --manifest=https://agent-69c4f1c2384b5d3--glittering-kitsune-1a77e6.netlify.app/manifest.json --directory=./twa-app
+        run: printf "n\n/usr/lib/jvm/temurin-17-amd64\n" | bubblewrap init --manifest=https://agent-69c4f1c2384b5d3--glittering-kitsune-1a77e6.netlify.app/manifest.json --directory=./twa-app
         env:
           BUBBLEWRAP_SKIP_UPDATE_CHECK: 'true'
 
