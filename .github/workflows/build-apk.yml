@@ -2,8 +2,8 @@ name: Build Sigma First APK
 on:
   workflow_dispatch:
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build:t
+    runs-on: ubuntu-lates
     steps:
       - uses: actions/checkout@v4
 
