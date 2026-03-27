@@ -83,7 +83,10 @@ jobs:
             <style name="Theme.App" parent="android:Theme.NoTitleBar.Fullscreen"/>
           </resources>
           EOF
-          python3 -c "
+         cat > gradle.properties << 'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF python3 -c "
           import struct,zlib
           def png(s):
             def chunk(t,d): c=t+d; return struct.pack('>I',len(d))+c+struct.pack('>I',zlib.crc32(c)&0xffffffff)
