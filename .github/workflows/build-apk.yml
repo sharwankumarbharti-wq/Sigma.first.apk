@@ -1,17 +1,17 @@
-name: Build Sigma First APK
+name: Build APK
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 jobs:
-  build:t
-    runs-on: ubuntu-lates
+  build:
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: '17'
-
       - name: Setup Android SDK
         run: |
           ANDROID_SDK=$HOME/android-sdk
@@ -23,13 +23,10 @@ jobs:
           echo "ANDROID_HOME=$ANDROID_SDK" >> $GITHUB_ENV
           yes | $ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
           $ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
-
       - name: Make gradlew executable
         run: chmod +x ./gradlew
-
       - name: Build APK
         run: ./gradlew assembleDebug --no-daemon
-
       - uses: actions/upload-artifact@v4
         with:
           name: sigma-first-apk
