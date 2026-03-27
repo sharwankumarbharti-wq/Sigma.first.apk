@@ -10,92 +10,60 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-      - name: Setup Android SDK
+      - name: Build
         run: |
+          curl -sL https://services.gradle.org/distributions/gradle-8.4-bin.zip -o g.zip
+          unzip -q g.zip -d $HOME/gradle
+          export PATH=$HOME/gradle/gradle-8.4/bin:$PATH
           ANDROID_SDK=$HOME/android-sdk
           mkdir -p $ANDROID_SDK/cmdline-tools
           curl -s https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -o ct.zip
           unzip -q ct.zip -d $ANDROID_SDK/cmdline-tools
           mv $ANDROID_SDK/cmdline-tools/cmdline-tools $ANDROID_SDK/cmdline-tools/latest
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK" >> $GITHUB_ENV
-          echo "ANDROID_HOME=$ANDROID_SDK" >> $GITHUB_ENV
+          export ANDROID_SDK_ROOT=$ANDROID_SDK
+          export ANDROID_HOME=$ANDROID_SDK
           yes | $ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager --licenses > /dev/null 2>&1
           $ANDROID_SDK/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0"
-      - name: Install Gradle
-        run: |
-          curl -sL https://services.gradle.org/distributions/gradle-8.4-bin.zip -o gradle.zip
-          unzip -q gradle.zip -d $HOME/gradle
-          echo "$HOME/gradle/gradle-8.4/bin" >> $GITHUB_PATH
-      - name: Create Android project
-        run: |
-          mkdir -p app/src/main/res/values
-          mkdir -p app/src/main/res/mipmap-hdpi
-          cat > settings.gradle << 'EOF'
-          rootProject.name = "SigmaFirst"
-          include ':app'
-          EOF
-          cat > build.gradle << 'EOF'
-          buildscript {
-            repositories { google(); mavenCentral() }
-            dependencies { classpath 'com.android.tools.build:gradle:8.2.2' }
-          }
-          allprojects { repositories { google(); mavenCentral() } }
-          EOF
-          cat > app/build.gradle << 'EOF'
-          plugins { id 'com.android.application' }
-          android {
-            namespace 'app.sigmafirst.twa'
-            compileSdk 34
-            defaultConfig {
-              applicationId "app.sigmafirst.twa"
-              minSdk 21
-              targetSdk 34
-              versionCode 1
-              versionName "1.0.0"
-            }
-            compileOptions {
-              sourceCompatibility JavaVersion.VERSION_17
-              targetCompatibility JavaVersion.VERSION_17
-            }
-          }
-          dependencies {
-            implementation 'com.google.androidbrowserhelper:androidbrowserhelper:2.5.0'
-          }
-          EOF
+          mkdir -p app/src/main/res/values app/src/main/res/mipmap-hdpi
+          echo 'rootProject.name="SigmaFirst"
+          include ":app"' > settings.gradle
+          echo 'buildscript{repositories{google();mavenCentral()}
+          dependencies{classpath "com.android.tools.build:gradle:8.2.2"}}
+          allprojects{repositories{google();mavenCentral()}}' > build.gradle
+          echo 'android.useAndroidX=true
+          android.enableJetifier=true' > gradle.properties
+          echo 'plugins{id "com.android.application"}
+          android{namespace "app.sigmafirst.twa";compileSdk 34
+          defaultConfig{applicationId "app.sigmafirst.twa";minSdk 21;targetSdk 34;versionCode 1;versionName "1.0.0"}
+          compileOptions{sourceCompatibility JavaVersion.VERSION_17;targetCompatibility JavaVersion.VERSION_17}}
+          dependencies{implementation "com.google.androidbrowserhelper:androidbrowserhelper:2.5.0"}' > app/build.gradle
           cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-            <uses-permission android:name="android.permission.INTERNET" />
-            <application android:label="Sigma First" android:theme="@style/Theme.App">
-              <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity" android:exported="true">
-                <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://agent-69c4f1c2384b5d3--glittering-kitsune-1a77e6.netlify.app" />
-                <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-              </activity>
-              <service android:name="com.google.androidbrowserhelper.trusted.DelegationService" android:exported="true" android:enabled="true">
-                <intent-filter><action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
-              </service>
-            </application>
+          <uses-permission android:name="android.permission.INTERNET"/>
+          <application android:label="Sigma First" android:theme="@style/Theme.App">
+          <activity android:name="com.google.androidbrowserhelper.trusted.LauncherActivity" android:exported="true">
+          <meta-data android:name="android.support.customtabs.trusted.DEFAULT_URL" android:value="https://agent-69c4f1c2384b5d3--glittering-kitsune-1a77e6.netlify.app"/>
+          <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+          </activity>
+          <service android:name="com.google.androidbrowserhelper.trusted.DelegationService" android:exported="true" android:enabled="true">
+          <intent-filter><action android:name="android.support.customtabs.trusted.TRUSTED_WEB_ACTIVITY_SERVICE"/><category android:name="android.intent.category.DEFAULT"/></intent-filter>
+          </service>
+          </application>
           </manifest>
           EOF
-          cat > app/src/main/res/values/themes.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <resources>
-            <style name="Theme.App" parent="android:Theme.NoTitleBar.Fullscreen"/>
-          </resources>
-          EOF
-         cat > gradle.properties << 'EOF'
-          android.useAndroidX=true
-          android.enableJetifier=true
-          EOF python3 -c "
+          echo '<?xml version="1.0" encoding="utf-8"?><resources><style name="Theme.App" parent="android:Theme.NoTitleBar.Fullscreen"/></resources>' > app/src/main/res/values/themes.xml
+          python3 -c "
           import struct,zlib
           def png(s):
-            def chunk(t,d): c=t+d; return struct.pack('>I',len(d))+c+struct.pack('>I',zlib.crc32(c)&0xffffffff)
-            raw=b''.join(b'\x00'+bytes([30,80,40]*s) for _ in range(s))
-            return b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',s,s,8,2,0,0,0))+chunk(b'IDAT',zlib.compress(raw))+chunk(b'IEND',b'')
+            def c(t,d):
+              x=t+d
+              return struct.pack('>I',len(d))+x+struct.pack('>I',zlib.crc32(x)&0xffffffff)
+            r=b''.join(b'\x00'+bytes([30,80,40]*s) for _ in range(s))
+            return b'\x89PNG\r\n\x1a\n'+c(b'IHDR',struct.pack('>IIBBBBB',s,s,8,2,0,0,0))+c(b'IDAT',zlib.compress(r))+c(b'IEND',b'')
           open('app/src/main/res/mipmap-hdpi/ic_launcher.png','wb').write(png(72))
           "
-      - name: Build APK
-        run: gradle assembleDebug --no-daemon
+          gradle assembleDebug --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: sigma-first-apk
